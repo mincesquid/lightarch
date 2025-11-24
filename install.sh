@@ -143,10 +143,10 @@ initrd  /initramfs-linux.img
 options cryptdevice=UUID=$ROOT_UUID:cryptroot root=/dev/mapper/cryptroot rw quiet
 BOOT
 
-echo "[chroot] Enabling sudo for wheel..."
+echo "[chroot] Enable sudo for wheel..."
 sed -i 's/^# %wheel ALL=(ALL:ALL) ALL/%wheel ALL=(ALL:ALL) ALL/' /etc/sudoers
 
-echo "[chroot] Making journald persistent..."
+echo "[chroot] Make journald persistent..."
 sed -i 's/^#\?Storage=.*/Storage=persistent/' /etc/systemd/journald.conf || true
 systemctl restart systemd-journald || true
 
