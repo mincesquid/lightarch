@@ -1,13 +1,13 @@
 #!/bin/bash
 set -euo pipefail
 
-# ========= CONFIG =========
-disk="/dev/sdb"                 # DESTROYED COMPLETELY. Double-check this.
+# ================== CONFIG ==================
+disk="/dev/sdb"                 # THIS WILL BE WIPED COMPLETELY
 hostname="thefawnz"
 username="fawn"
-timezone="Canada/Pacific"
+timezone="America/Vancouver"
 locale="en_US.UTF-8"
-# ==========================
+# ============================================
 
 if [ "$(id -u)" -ne 0 ]; then
   echo "Run this as root."
@@ -19,11 +19,11 @@ if [ ! -b "$disk" ]; then
   exit 1
 fi
 
-echo "!!! WARNING: This will WIPE $disk COMPLETELY and set up FULL LUKS ENCRYPTION !!!"
-echo "Press Ctrl+C now to abort, or wait 10 seconds to continue..."
+echo "!!! WARNING: THIS WILL WIPE $disk COMPLETELY AND SET UP FULL LUKS ENCRYPTION !!!"
+echo "Press Ctrl+C NOW to abort, or wait 10 seconds to continue..."
 sleep 10
 
-echo "[*] Cleaning previous mounts and mapping (if any)..."
+echo "[*] Cleaning previous mounts and mappings..."
 umount -R /mnt 2>/dev/null || true
 cryptsetup close cryptroot 2>/dev/null || true
 
