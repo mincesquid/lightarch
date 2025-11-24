@@ -32,9 +32,10 @@ sgdisk -Z "$disk"
 sgdisk -n1:0:+512M -t1:ef00 -c1:"EFI" "$disk"
 sgdisk -n2:0:0     -t2:8300 -c2:"cryptroot" "$disk"
 
+echo "[*] Creating filesystems..."
 mkfs.fat -F32 "${disk}1"
 
-echo "[*] Creating LUKS container on ${disk}2 (you will be asked for an encryption password)..."
+echo "[*] Creating LUKS2 container on ${disk}2..."
 cryptsetup luksFormat \
   --type luks2 \
   --cipher aes-xts-plain64 \
@@ -45,15 +46,15 @@ cryptsetup luksFormat \
 echo "[*] Opening LUKS container..."
 cryptsetup open "${disk}2" cryptroot
 
-echo "[*] Creating ext4 filesystem inside LUKS container..."
 mkfs.ext4 -F /dev/mapper/cryptroot
 
-echo "[*] Mounting target..."
+echo "[*] Mounting target filesystem..."
 mount /dev/mapper/cryptroot /mnt
 mkdir -p /mnt/boot
 mount "${disk}1" /mnt/boot
 
 echo "[*] Pacstrap base system + XFCE + tools..."
+
 pacstrap -K /mnt \
   base base-devel linux linux-headers linux-firmware \
   amd-ucode intel-ucode \
