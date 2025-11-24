@@ -156,18 +156,14 @@ table inet hardwall {
   chain input {
     type filter hook input priority filter; policy drop;
 
-    # Allow established sessions and loopback
     ct state established,related accept
     iif "lo" accept
 
-    # Allow basic ICMP (ping, etc.)
     ip protocol icmp accept
     ip6 nexthdr ipv6-icmp accept
 
-    # Explicitly slam SSH inbound
     tcp dport { 22 } drop
 
-    # Everything else hits the log+drop chain
     jump logdrop
   }
 
