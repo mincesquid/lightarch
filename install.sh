@@ -94,7 +94,7 @@ arch-chroot /mnt env \
   TIMEZONE="$timezone" \
   LOCALE="$locale" \
   ROOT_UUID="$root_uuid" \
-  bash << 'EOF'
+  bash -e << 'EOF'
 set -euo pipefail
 
 echo "[chroot] Setting timezone and clock..."
@@ -106,7 +106,7 @@ sed -i 's/^#en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen || true
 if ! grep -q '^en_CA.UTF-8 UTF-8' /etc/locale.gen; then
   echo 'en_CA.UTF-8 UTF-8' >> /etc/locale.gen
 fi
-sed -i 's/^#en_CA.UTF-8 UTF-8/en_CA.UTF-8 UTF-8/' /etc/locale.gen || true
+
 locale-gen
 
 echo "LANG=$LOCALE" > /etc/locale.conf
@@ -208,7 +208,11 @@ HARD
 sysctl --system || true
 
 echo "[chroot] Creating user '$USERNAME'..."
-useradd -m -G wheel,audio,video,storage,input,libvirt,docker -s /usr/bin/fish "$USERNAME"
+useradd -m -G wheel,audio,video,storage,input,libvirt,docker -s /bin/bash "$USERNAME"
+# Set shell to fish only if it exists
+if [ -x /usr/bin/fish ]; then
+  chsh -s /usr/bin/fish "$USERNAME"
+fi
 
 echo "[chroot] Disabling unnecessary network daemons (if present)..."
 systemctl disable --now sshd.service 2>/dev/null || true
@@ -256,15 +260,50 @@ Desktop / quality of life:
 
 After first boot:
   sudo pacman -Syu
-MOTD
-
-echo "[chroot] Setting passwords (loop until success)..."
-
 echo ">>> Set ROOT password now:"
+max_retries=5
+retry_count=0
 until passwd; do
+  retry_count=$((retry_count+1))
   echo "Password setup failed, try again..."
+  if [ "$retry_count" -ge "$max_retries" ]; then
+    read -p "Maximum attempts reached. [S]kip, [E]xit, or [C]ontinue? " choice
+    case "$choice" in
+      [Ss]*) echo "Skipping root password setup."; break ;;
+      [Ee]*) echo "Exiting script."; exit 1 ;;
+      *) retry_count=0 ;;
+    esac
+  fi
 done
 
+echo
+echo ">>> Set password for $USERNAME:"
+retry_count=0
+until passwd "$USERNAME"; do
+  retry_count=$((retry_count+1))
+  echo "Password setup for $USERNAME failed, try again..."
+  if [ "$retry_count" -ge "$max_retries" ]; then
+    read -p "Maximum attempts reached. [S]kip, [E]xit, or [C]ontinue? " choice
+    case "$choice" in
+      [Ss]*) echo "Skipping password setup for $USERNAME."; break ;;
+      [Ee]*) echo "Exiting script."; exit 1 ;;
+      *) retry_count=0 ;;
+    esac
+  fi
+  fi
+done
+
+echo
+echo ">>> Set password for $USERNAME:"
+max_retries=5
+attempt=1
+until passwd "$USERNAME"; do
+  echo "Password setup for $USERNAME failed, try again... ($attempt/$max_retries)"
+  attempt=$((attempt+1))
+  if [ "$attempt" -gt "$max_retries" ]; then
+    echo "Maximum password attempts reached for $USERNAME. Aborting."
+    exit 1
+  fi
 echo
 echo ">>> Set password for $USERNAME:"
 until passwd "$USERNAME"; do
