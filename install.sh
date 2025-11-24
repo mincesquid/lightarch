@@ -183,24 +183,36 @@ table inet hardwall {
 }
 NFT
 
-echo "[chroot] Disabling IPv6 (system-wide)..."
+echo "[chroot] Disabling IPv6 system-wide..."
 cat > /etc/sysctl.d/99-disable-ipv6.conf << SYSCTL
 net.ipv6.conf.all.disable_ipv6 = 1
 net.ipv6.conf.default.disable_ipv6 = 1
 net.ipv6.conf.lo.disable_ipv6 = 1
 SYSCTL
 
+echo "[chroot] Extra sysctl hardening..."
+cat > /etc/sysctl.d/99-hardening.conf << HARD
+kernel.kptr_restrict=2
+kernel.unprivileged_bpf_disabled=1
+kernel.randomize_va_space=2
+net.ipv4.conf.all.rp_filter=1
+net.ipv4.conf.default.rp_filter=1
+net.ipv4.tcp_syncookies=1
+net.ipv4.conf.all.accept_redirects=0
+net.ipv4.conf.all.send_redirects=0
+net.ipv6.conf.all.accept_redirects=0
+fs.protected_hardlinks=1
+fs.protected_symlinks=1
+HARD
+
 sysctl --system || true
 
 echo "[chroot] Creating user '$USERNAME'..."
 useradd -m -G wheel,audio,video,storage,input,libvirt,docker -s /usr/bin/fish "$USERNAME"
 
-echo
-echo ">>> Set root password now:"
-passwd
-echo
-echo ">>> Set password for $USERNAME:"
-passwd "$USERNAME"
+echo "[chroot] Disabling unnecessary network daemons (if present)..."
+systemctl disable --now sshd.service 2>/dev/null || true
+systemctl disable --now avahi-daemon.service avahi-daemon.socket 2>/dev/null || true
 
 echo "[chroot] Enabling core services..."
 systemctl enable NetworkManager
