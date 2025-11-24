@@ -64,22 +64,27 @@ pacstrap -K /mnt \
   xfce4 xfce4-goodies \
   lightdm lightdm-gtk-greeter \
   xorg-server xorg-xinit \
-  pipewire pipewire-pulse pipewire-alsa wireplumber pavucontrol alsa-utils \
+  pipewire pipewire-alsa pipewire-pulse wireplumber pavucontrol alsa-utils \
   nvidia nvidia-utils nvidia-settings \
-  qemu-full virt-manager virt-viewer dnsmasq vde2 bridge-utils libvirt iptables-nft \
+  qemu virt-manager virt-viewer dnsmasq vde2 bridge-utils libvirt iptables-nft \
   docker docker-compose \
-  wireshark-qt nmap masscan aircrack-ng hydra john hashcat whois dnsutils tcpdump gnu-netcat \
-  binwalk foremost sleuthkit \
-  lynis rkhunter fail2ban clamav clamtk firejail keepassxc \
-  htop neovim nano filelight gparted \
+  wireshark-qt nmap masscan aircrack-ng hydra john hashcat \
+  whois bind tcpdump openbsd-netcat \
+  binwalk foremost sleuthkit testdisk ddrescue \
+  lynis rkhunter fail2ban clamav clamtk firejail \
+  keepassxc \
+  htop btop tree rsync zip unzip p7zip lsof strace \
+  gparted filelight flameshot \
   firefox \
   reflector \
-  nftables
+  nftables \
+  zram-generator \
+  fish
 
 echo "[*] Generating fstab..."
 genfstab -U /mnt >> /mnt/etc/fstab
 
-echo "[*] Capturing root partition UUID for bootloader..."
+echo "[*] Capturing root partition UUID..."
 root_uuid=$(blkid -s UUID -o value "${disk}2")
 
 echo "[*] Entering chroot to configure system..."
