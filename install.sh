@@ -126,6 +126,8 @@ mkinitcpio -P
 echo "[chroot] Installing systemd-boot..."
 bootctl install
 
+chmod 600 /boot/loader/random-seed 2>/dev/null || true
+
 cat > /boot/loader/loader.conf << LOADER
 default  arch
 timeout  4
