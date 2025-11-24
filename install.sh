@@ -222,50 +222,65 @@ systemctl enable docker
 systemctl enable fstrim.timer
 systemctl enable nftables
 systemctl enable fail2ban
-systemctl enable clamav-freshclam.service || true
-systemctl enable clamav-daemon.service || true
+systemctl enable clamav-freshclam.service 2>/dev/null || true
+systemctl enable clamav-daemon.service 2>/dev/null || true
 
-echo "[chroot] Dropping MOTD with tool hints..."
+echo "[chroot] Drop MOTD with tool hints..."
 cat > /etc/motd << 'MOTD'
-Welcome to your hardened Arch + XFCE box.
+Welcome to your hardened Arch + XFCE system, fawn.
 
-Security & defense tools preinstalled:
-  - lynis         : full system audit (sudo lynis audit system)
-  - rkhunter      : rootkit checks (sudo rkhunter --check)
-  - fail2ban      : ban brute-force IPs (jails configurable in /etc/fail2ban)
-  - clamav/clamtk : on-demand AV scanning (freshclam auto-updates DB)
-  - firejail      : sandbox apps (e.g. firejail firefox)
-  - nftables      : hardwall ruleset (see /etc/nftables.conf)
-  - keepassxc     : password manager (stores secrets locally, no cloud)
+Security / defense:
+  - lynis          : sudo lynis audit system
+  - rkhunter       : sudo rkhunter --check
+  - fail2ban       : bans brute-force IPs (config in /etc/fail2ban)
+  - clamav/clamtk  : on-demand AV scanning
+  - firejail       : sandbox apps (e.g. firejail firefox)
+  - nftables       : hardwall ruleset (/etc/nftables.conf)
+  - keepassxc      : password manager (local, no cloud)
 
-Offense / recon / forensics:
-  - wireshark-qt  : packet analysis
-  - nmap, masscan : network scanning (stealth vs internet-scale)
-  - aircrack-ng   : Wi-Fi stuff when needed
-  - hydra, john, hashcat : auth cracking / auditing
-  - binwalk       : firmware / binary inspection
-  - foremost      : file carving / recovery
-  - sleuthkit     : disk and filesystem forensics toolkit
+Recon / offense / forensics:
+  - wireshark-qt   : packet analysis (run as non-root, use group perms)
+  - nmap, masscan  : network scanning
+  - aircrack-ng    : Wi-Fi tools
+  - hydra, john, hashcat : password/auth auditing
+  - binwalk        : firmware / binary inspection
+  - foremost       : file carving / recovery
+  - sleuthkit      : filesystem forensics
+  - testdisk/ddrescue: recovery / imaging
+  - tcpdump, whois, dig (from bind), nc (openbsd-netcat)
 
-Desktop toys:
-  - XFCE4 + goodies (light, fast)
-  - Firefox, pavucontrol, filelight, gparted, htop, neovim, nano
+Desktop / quality of life:
+  - XFCE4 + goodies
+  - Firefox, pavucontrol, filelight, gparted
+  - htop, btop, neovim, nano, fish shell
 
-After first boot, run:
+After first boot:
   sudo pacman -Syu
-
 MOTD
+
+echo "[chroot] Setting passwords (loop until success)..."
+
+echo ">>> Set ROOT password now:"
+until passwd; do
+  echo "Password setup failed, try again..."
+done
+
+echo
+echo ">>> Set password for $USERNAME:"
+until passwd "$USERNAME"; do
+  echo "Password setup for $USERNAME failed, try again..."
+done
 
 echo "[chroot] Base config done."
 EOF
 
 echo
 echo "=============================================="
-echo " Install complete."
-echo " Disk used  : $disk"
-echo " Hostname   : $hostname"
-echo " User       : $username"
-echo " Desktop    : XFCE4"
-echo " Encryption : Full LUKS on ${disk}2 -> /dev/mapper/cryptroot"
+echo "  INSTALL COMPLETE"
+echo "  Disk used   : $disk"
+echo "  Hostname    : $hostname"
+echo "  User        : $username"
+echo "  Desktop     : XFCE4"
+echo "  Encryption  : Full LUKS2 on ${disk}2 -> /dev/mapper/cryptroot"
 echo "=============================================="
-echo "Now: reboot, unlock LUKS at prompt, and log in as '$username'."
+echo "Now: reboot, unlock LUKS at prompt, log in as '$username'."
