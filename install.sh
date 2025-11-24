@@ -94,7 +94,7 @@ arch-chroot /mnt env \
   TIMEZONE="$timezone" \
   LOCALE="$locale" \
   ROOT_UUID="$root_uuid" \
-  bash -e << 'EOF'
+  bash << 'EOF'
 set -euo pipefail
 
 echo "[chroot] Setting timezone and clock..."
@@ -102,15 +102,13 @@ ln -sf "/usr/share/zoneinfo/$TIMEZONE" /etc/localtime
 hwclock --systohc
 
 echo "[chroot] Configuring locale..."
-sed -i 's/^#en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen
-
+sed -i 's/^#en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen || true
 if ! grep -q '^en_CA.UTF-8 UTF-8' /etc/locale.gen; then
   echo 'en_CA.UTF-8 UTF-8' >> /etc/locale.gen
-else
-  sed -i 's/^#en_CA.UTF-8 UTF-8/en_CA.UTF-8 UTF-8/' /etc/locale.gen
 fi
-
+sed -i 's/^#en_CA.UTF-8 UTF-8/en_CA.UTF-8 UTF-8/' /etc/locale.gen || true
 locale-gen
+
 echo "LANG=$LOCALE" > /etc/locale.conf
 
 echo "[chroot] Setting hostname and hosts..."
